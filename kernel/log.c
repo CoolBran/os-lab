@@ -66,7 +66,7 @@ initlog(int dev, struct superblock *sb)
 
 // Copy committed blocks from log to their home location
 static void
-install_trans(void)
+install_trans(void) //logged block to disk block
 {
   int tail;
 
@@ -99,12 +99,12 @@ read_head(void)
 // This is the true point at which the
 // current transaction commits.
 static void
-write_head(void)
+write_head(void) //opposite read_head()
 {
-  struct buf *buf = bread(log.dev, log.start);
+  struct buf *buf = bread(log.dev, log.start); //exit correlative disk block
   struct logheader *hb = (struct logheader *) (buf->data);
   int i;
-  hb->n = log.lh.n;
+  hb->n = log.lh.n; //struct log log :just in mem
   for (i = 0; i < log.lh.n; i++) {
     hb->block[i] = log.lh.block[i];
   }
@@ -148,12 +148,12 @@ end_op(void)
   int do_commit = 0;
 
   acquire(&log.lock);
-  log.outstanding -= 1;
-  if(log.committing)
+  log.outstanding -= 1; //unfinished syscall work count
+  if(log.committing)   //other work is committing
     panic("log.committing");
-  if(log.outstanding == 0){
+  if(log.outstanding == 0){ //without other work is committiing
     do_commit = 1;
-    log.committing = 1;
+    log.committing = 1;  //this ready to committing
   } else {
     // begin_op() may be waiting for log space,
     // and decrementing log.outstanding has decreased
@@ -175,8 +175,8 @@ end_op(void)
 
 // Copy modified blocks from cache to log.
 static void
-write_log(void)
-{
+write_log(void) // write data in logged block(after this: install)
+{               //use block[tail] to look up the position of block
   int tail;
 
   for (tail = 0; tail < log.lh.n; tail++) {
@@ -211,7 +211,7 @@ commit()
 //   log_write(bp)
 //   brelse(bp)
 void
-log_write(struct buf *b)
+log_write(struct buf *b) //note:just record buf b in which block(just a array map, fill log.lh.block[] a map)
 {
   int i;
 

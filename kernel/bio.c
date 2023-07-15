@@ -66,7 +66,7 @@ bget(uint dev, uint blockno)
   for(b = bcache.head.next; b != &bcache.head; b = b->next){
     if(b->dev == dev && b->blockno == blockno){
       b->refcnt++;
-      release(&bcache.lock);
+      release(&bcache.lock); //use two lock at: is already cached?
       acquiresleep(&b->lock);
       return b;
     }
@@ -76,11 +76,11 @@ bget(uint dev, uint blockno)
   // Recycle the least recently used (LRU) unused buffer.
   for(b = bcache.head.prev; b != &bcache.head; b = b->prev){
     if(b->refcnt == 0) {
-      b->dev = dev;
+      b->dev = dev;  //declare a buf to use 
       b->blockno = blockno;
       b->valid = 0;
       b->refcnt = 1;
-      release(&bcache.lock);
+      release(&bcache.lock); //user two lock at: look up free buf
       acquiresleep(&b->lock);
       return b;
     }
