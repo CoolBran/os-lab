@@ -31,10 +31,10 @@ struct {
   // Sorted by how recently the buffer was used.
   // head.next is most recent, head.prev is least.
   struct buf head;
-} bcache;
+} bcache; //note by myself:this struct only a object
 
 void
-binit(void)
+binit(void) //note: loop biteral linklist
 {
   struct buf *b;
 
@@ -42,13 +42,13 @@ binit(void)
 
   // Create linked list of buffers
   bcache.head.prev = &bcache.head;
-  bcache.head.next = &bcache.head;
-  for(b = bcache.buf; b < bcache.buf+NBUF; b++){
-    b->next = bcache.head.next;
+  bcache.head.next = &bcache.head; //key: head.next
+  for(b = bcache.buf; b < bcache.buf+NBUF; b++){  //note:head insert form
+    b->next = bcache.head.next; //head.next->reference next need point node
     b->prev = &bcache.head;
     initsleeplock(&b->lock, "buffer");
-    bcache.head.next->prev = b;
-    bcache.head.next = b;
+    bcache.head.next->prev = b; //difficult in here:first time head'prev->first && after first: second node's prev->first(conclude: second(head(regard as second node) or head'next) node's prev->first(new insert))
+    bcache.head.next = b;  //note:head.next -> after head' first node.this sentence must put after above sentence
   }
 }
 
